@@ -8,82 +8,76 @@ import Dropdown from "./templates/Dropdown";
 import Loading from "./Loading";
 import { useNavigate } from "react-router-dom"; // Navigation for details page
 
-function Home() {
-  const [wallpaper, setWallpaper] = useState(null);
-  const [trending, setTrending] = useState(null);
+const Home = () => {
+
+  const [wallpaper, setWallpaper] = useState("");
+  const [trending, setTrending] = useState("");
   const [category, setCategory] = useState("all");
-  const [trailerUrl, setTrailerUrl] = useState(""); // Store trailer URL
-  const navigate = useNavigate(); // For navigating to details page
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const GetHeaderWallpaper = async () => {
-    try {
-      const { data } = await axios.get(`/trending/all/day`);
-      let randomData =
-        data.results[(Math.random() * data.results.length).toFixed()];
-      setWallpaper(randomData || []);
-    } catch (e) {
-      console.error("Error fetching wallpaper:", e);
-      setWallpaper([]);
-    }
-  };
-
-  const GetTrending = async () => {
-    try {
-      const { data } = await axios.get(`/trending/${category}/day`);
-      setTrending(data.results || []);
-    } catch (e) {
-      console.error("Error fetching trending:", e);
-      setTrending([]);
-    }
-  };
-
-  // Function to fetch and show trailer
-  const handleWatchTrailer = async (id, media_type) => {
-    try {
-      const { data } = await axios.get(`/${media_type}/${id}/videos`);
-      const trailer = data.results.find((vid) => vid.type === "Trailer"); // Get trailer video
-      if (trailer) {
-        setTrailerUrl(`https://www.youtube.com/embed/${trailer.key}`);
-      } else {
-        alert("No trailer available!");
+  const getWallpaper = async () => {
+      try {
+          const { data } = await axios.get(`/trending/movie/day`);
+          let randomData = await data.results[Math.floor(Math.random() * data.results.length)];
+          setWallpaper(randomData);
+      } catch (error) {
+          console.log(error);
       }
-    } catch (error) {
-      console.error("Error fetching trailer:", error);
-    }
+  };
+
+  const getTrending = async () => {
+      try {
+          const { data } = await axios.get(`/trending/${category}/day`);
+          setTrending(data.results);
+      } catch (error) {
+          console.log(error);
+      }
   };
 
   useEffect(() => {
-    GetTrending();
-    !wallpaper && GetHeaderWallpaper();
+      setTimeout(() => {
+          if (!wallpaper) getWallpaper();
+          getTrending();
+      }, 400);
   }, [category]);
 
-  document.title = "Movie App";
+  const toggleSidebar = () => {
+      setIsSidebarOpen((prev) => !prev);
+  };
 
   return wallpaper && trending ? (
-    <>
-      <SideNav />
-      <div className="w-[80%] h-full overflow-auto overflow-x-hidden">
-        <TopNav />
-        <Header data={wallpaper} onWatchTrailer={handleWatchTrailer} /> 
-        
-        <div className="flex justify-between p-10">
-          <h1 className="text-3xl font-semibold text-zinc-400">Trending</h1>
-          <Dropdown title="Filter" options={["tv", "movie", "all"]} func={(e) => setCategory(e.target.value)} />
-        </div>
-        
-        
-        <HorizontalCards 
-          data={trending} 
-          onWatchTrailer={handleWatchTrailer} 
-          onViewDetails={(id, media_type) => navigate(`/details/${media_type}/${id}`)}
-        />
+      
+      <div className="w-full h-full flex ">
 
-        {trailerUrl && <TrailerModal trailerUrl={trailerUrl} onClose={() => setTrailerUrl("")} />}
+          <div
+              className={`${
+                  isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+              } xl:translate-x-0 fixed xl:static xl:w-[18%] md:w-[32%] w-64 h-full border-r-2 border-zinc-500 bg-zinc-800 transition-transform duration-300 z-10`}
+          >
+              <SideNav onClickHam={toggleSidebar} close={!isSidebarOpen} />
+          </div>
+
+          <div className="w-full xl:w-[82%] h-screen overflow-y-auto">
+              <TopNav onClickHam={toggleSidebar} hamburger={!isSidebarOpen} />
+              <Header data={wallpaper} />
+              <div className="w-full sm:h-[58vh] h-[48vh] p-4 mb-5">
+                  <div className="w-full flex justify-between items-center">
+                      <h1 className="text-2xl font-semibold text-zinc-400">Trending</h1>
+                      <Dropdown
+                          title={"Filter"}
+                          options={["tv", "movie", "all"]}
+                          func={(e) => setCategory(e.target.value)}
+                      />
+                  </div>
+                  <HorizontalCards data={trending} title={category} />
+              </div>
+          </div>
       </div>
-    </>
   ) : (
-    <Loading />
+      <div className="w-screen h-screen">
+          <Loading />
+      </div>
   );
-}
+};
 
 export default Home;
