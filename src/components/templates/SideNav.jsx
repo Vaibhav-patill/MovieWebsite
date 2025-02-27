@@ -9,7 +9,7 @@ const Sidenav = ({ onClickHam, close }) => {
                 <span className="ml-1 font-bold ">Movies App</span>
                 <i
                     onClick={onClickHam}
-                    className={`${close ? "hidden" : "inline-block"} xl:hidden text-white text-2xl font-semibold absolute right-2 top-5 ri-close-large-line`}
+                    className={`${close ? "hidden" : "inline-block"} xl:hidden text-white text-2xl font-semibold absolute right-2 top-5 ri-menu-2-line`}
                 ></i>
             </h1>
 
